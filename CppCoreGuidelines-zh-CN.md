@@ -5640,7 +5640,7 @@ C++11 的初始化式列表规则免除了对许多构造函数的需求。例�
         vector<int> v;
     };
 
-    X x; // 意为 X{{}, {}}; 即空字符串和空 vector
+    X x; // 意为 X{{ "{{" }}}, {}}; 即空字符串和空 vector
 
 需要注意的是，内建类型并不会进行正确的默认构造：
 
@@ -8343,7 +8343,7 @@ B 类别中的数据成员应当为 `private` 或 `const`。这是因为封装�
 
     void use(B*);
 
-    D a[] = {{1, 2}, {3, 4}, {5, 6}};
+    D a[] = {{ "{{" }}1, 2}, {3, 4}, {5, 6}};
     B* p = a;     // 不好: a 退化为 &a[0]，并被转换为 B*
     p[1].x = 7;   // 覆盖了 a[0].y
 
@@ -12523,7 +12523,7 @@ C 风格的强制转换很危险，因为它可以进行任何种类的转换，
     class Shape { /* ... */ };
     class Circle : public Shape { /* ... */ Point c; int r; };
 
-    Circle c {{0, 0}, 42};
+    Circle c {{ "{{" }}0, 0}, 42};
     Shape s {c};    // 仅复制构造了 Circle 中的 Shape 部分
     s = c;          // 仅复制赋值了 Circle 中的 Shape 部分
 
@@ -12531,7 +12531,7 @@ C 风格的强制转换很危险，因为它可以进行任何种类的转换，
     {
         dest = src;
     }
-    Circle c2 {{1, 1}, 43};
+    Circle c2 {{ "{{" }}1, 1}, 43};
     assign(c, c2);   // 噢，传递的并不是整个状态
     assert(c == c2); // 如果提供复制操作，就也得提供比较操作，
                      //   但这里很可能返回 false
@@ -15871,7 +15871,7 @@ lambda 表达式会产生一个带有存储的闭包对象，它通常在运行�
 
     void use()
     {
-        Foo bar {{Thing{1}, Thing{2}, Thing{monkey}}, {"my_file", "r"}, "Here we go!"};
+        Foo bar {{ "{{" }}Thing{1}, Thing{2}, Thing{monkey}}, {"my_file", "r"}, "Here we go!"};
         // ...
     }
 
