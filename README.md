@@ -12,7 +12,7 @@
 ## 起步
 
 指导方针内容见 [CppCoreGuidelines](CppCoreGuidelines-zh-CN.md)。该文档为 [GH 风格 MarkDown 格式](https://github.github.com/gfm/)。我们有意维持文档简单，（英文原版）基本上是 ASCII，以便于进行诸如语言翻译和格式转换之类的自动化后处理。
-编写者们还维护了[一个适于浏览的版本](CppCoreGuidelines-zh-CN)。请注意它由人工集成，因而可能略晚于 master 分支的版本。
+编写者们还维护了[一个适于浏览的版本](https://lynnboy.github.io/CppCoreGuidelines-zh-CN/CppCoreGuidelines-zh-CN)。请注意它由人工集成，因而可能略晚于 master 分支的版本。
 [英文原版](http://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines)。
 
 这些指导方针是持续不断演进的文档，并且没有严格的“发布”节奏。Bjarne Stroustrop 定期评审文档并增加导言部分的版本号。[增加版本号的签入](https://github.com/isocpp/CppCoreGuidelines/releases) 都在 git 中打了标签。
