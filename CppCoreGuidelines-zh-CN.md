@@ -1,6 +1,6 @@
 # <a id="main"></a>C++ 核心指导方针
 
-2024/02/15
+2024/05/11
 
 编辑：
 
@@ -14,7 +14,7 @@
 本文档是处于持续改进之中的在线文档。
 本文档作为开源项目，发布版本为 0.8。
 复制，使用，修改，以及创建本项目的衍生物，受到一份 MIT 风格的版权授权。
-向本项目作出贡献需要同意一份贡献者授权。详情参见附属的 [LICENSE](LICENSE) 文件。
+向本项目作出贡献需要同意一份贡献者授权。详情参见附属的 [LICENSE](https://github.com/isocpp/CppCoreGuidelines/blob/master/LICENSE) 文件。
 我们将本项目开放给“友好用户”进行使用，复制，修改，以及生产衍生物，并希望能够获得建设性的资源投入。
 
 十分欢迎大家提出意见和改进建议。
@@ -1169,9 +1169,9 @@ C++ 程序员应当熟知标准库的基本知识，并在适当的时候加以�
 
 参见
 
-* [静态分析工具](???)
+* [静态分析工具](https://en.wikipedia.org/wiki/List_of_tools_for_static_code_analysis)
 * [并发工具](#Rconc-tools)
-* [测试工具](???)
+* [测试工具](https://github.com/isocpp/CppCoreGuidelines/tree/master)
 
 还有许多其他种类的工具，诸如源代码仓库和构建工具等等，
 但这些超出了本指导方针的范围。
@@ -3668,7 +3668,7 @@ C 风格的字符串非常普遍。它们是按一种约定方式定义的：就
 ##### 注解
 
 迭代器、索引值和引用也可以用来传递位置。
-[当不需要使用 `nullptr`](#Rf-ptr-ref)，或者[当不会改变被指代的对象](???)时，用引用通常比用指针更好。
+[当不需要使用 `nullptr`](#Rf-ptr-ref)，或者[当不会改变被指代的对象](#S-const)时，用引用通常比用指针更好。
 
 ##### 注解
 
@@ -9888,6 +9888,7 @@ C 风格的字符串是以单个指向以零结尾的字符序列的指针来传
 
 `make_shared` 为构造提供了更精炼的语句。
 它也提供了一个机会，通过把 `shared_ptr` 的使用计数和对象相邻放置，来消除为引用计数进行独立的内存分配操作。
+它也保证（C++17 前的代码中的）了复杂表达式中的异常安全性。
 
 ##### 示例
 
@@ -9907,7 +9908,7 @@ C 风格的字符串是以单个指向以零结尾的字符序列的指针来传
 ##### 理由
 
 `make_unique` 为构造提供了更精炼的语句。
-它也保证了复杂表达式中的异常安全性。
+它也保证（C++17 前的代码中的）了复杂表达式中的异常安全性。
 
 ##### 示例
 
@@ -20999,7 +21000,7 @@ C 标准库规则概览：
   所使用的程序库必须是已被证明可以用于关键任务应用的。
   它和这个指导方针集合的相似性并不让人惊讶，因为 Bjarne Stroustrup 正是 JSF++ 的作者之一。
   建议采纳，但请注意其非常特定的关注领域。
-* [MISRA C++ 2008: Guidelines for the use of the C++ language in critical systems] (https://www.misra.org.uk/Buyonline/tabid/58/Default.aspx)。
+* [MISRA C++:2023 Guidelines for the use C++17 in critical systems](https://misra.org.uk/product/misra-cpp2023/)。
 * [Using C++ in Mozilla Code](https://firefox-source-docs.mozilla.org/code-quality/coding-style/using_cxx_in_firefox_code.html).
   如其名称所示，它关注于跨许多（老）编译器的兼容性。
   因此，它是很具有限制性的。
@@ -22648,7 +22649,7 @@ GSL 是在指导方针中所指定的类型和别名的一个小集合。当写�
         // ...
     };
 
-这个类是一个资源句柄。它管理各个 `T` 对象的生存期。为此，`Vector` 必然要对[一组特殊操作](???)（几个构造函数，析构函数，等等）进行定义或弃置。
+这个类是一个资源句柄。它管理各个 `T` 对象的生存期。为此，`Vector` 必然要对[一组特殊操作](#Rc-five)（几个构造函数，析构函数，等等）进行定义或弃置。
 
 ##### 示例
 
