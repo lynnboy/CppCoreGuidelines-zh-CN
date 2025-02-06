@@ -1,6 +1,6 @@
 # <a id="main"></a>C++ 核心指导方针
 
-2024/05/11
+2024/10/3
 
 编辑：
 
@@ -1127,7 +1127,7 @@ C++ 程序员应当熟知标准库的基本知识，并在适当的时候加以�
     }
 
 这段代码是低层的，啰嗦的，而且易错的。
-比如说，我们就“忘了”检查内存耗尽情况。
+比如说，我们就“忘了”检查内存耗尽情况并向 `sz` 赋了新值。
 我们可以代之以使用 `vector`：
 
     vector<int> v;
@@ -2683,9 +2683,9 @@ C++ 程序员应当熟知标准库的基本知识，并在适当的时候加以�
 
 函数模板（包括类模板的成员函数 `A<T>::function()` 和成员函数模板 `A::function<T>()`）一般都定义于头文件中，因此是内联的。
 
-##### 强制实施
+##### 注解
 
-对超过三条语句，并且本可以声明为非内联的 `inline` 函数（比如类成员函数）标记为 `inline`。
+如果函数超过三条语句，并且可以声明为非内联的（比如类成员函数），请考虑使其非内联。
 
 ### <a id="Rf-noexcept"></a>F.6: 如果函数必然不会抛出异常，就将其声明为 `noexcept`
 
@@ -4882,13 +4882,16 @@ C++ 内建类型都是正规的，标准程序库的一些类型，如 `string`�
 
     struct Named_map {
     public:
-        // ... 并未声明任何默认操作 ...
+        explicit Named_map(const string& n) : name(n) {}
+        // 无复制/移动构造函数
+        // 无复制移动赋值运算符
+        // 无析构函数
     private:
         string name;
         map<int, int> rep;
     };
 
-    Named_map nm;        // 默认构造
+    Named_map nm("map"); // 构造
     Named_map nm2 {nm};  // 复制构造
 
 由于 `std::map` 和 `string` 都带有全部的特殊函数，这里并不需要做别的事情。
@@ -6598,7 +6601,7 @@ ISO 标准中对标准库容器类仅仅保证了“有效但未指明”的状�
 
 ##### 强制实施
 
-【中级】 特殊操作的函数体不应当和编译器生成的版本具有同样的访问性和语义，因为这样做是多余的。
+【中级】 用户定义操作的函数体不应当和编译器生成的版本具有同样的语义，因为这样做是多余的。
 
 ### <a id="Rc-delete"></a>C.81: 当需要关闭缺省行为（且不需要替代的行为）时，使用 `=delete`
 
@@ -8029,11 +8032,6 @@ B 类别中的数据成员应当为 `private` 或 `const`。这是因为封装�
 并非每个类都要作为基类的。
 大多数标准库的类都是这样（比如，`std::vector` 和 `std::string` 都并非为了派生而设计）。
 这条规则是关于在准备作为某个类层次的接口的带有虚函数的类中有关 `final` 的使用的。
-
-##### 注解
-
-用 `final` 来把单个的虚函数封印则是易错的，因为在定义和覆盖一组函数时，`final` 是很容易被忽视的。
-幸运的是，编译器能够捕捉到这种错误：你无法在派生类中重新声明/重新打开一个 `final` 成员。
 
 ##### 注解
 
@@ -9623,24 +9621,7 @@ C 风格的字符串是以单个指向以零结尾的字符序列的指针来传
 
 ##### 例外
 
-创建指向堆分配缓冲区的局部 `const unique_ptr<T[]>` 是没问题的，这是一种有效的表现有作用域的动态数组的方法。
-
-##### 示例
-
-一个局部 `const unique_ptr<T[]>` 变量的有效用例：
-
-    int get_median_value(const std::list<int>& integers)
-    {
-      const auto size = integers.size();
-
-      // OK: declaring a local unique_ptr<T[]>.
-      const auto local_buffer = std::make_unique_for_overwrite<int[]>(size);
-
-      std::copy_n(begin(integers), size, local_buffer.get());
-      std::nth_element(local_buffer.get(), local_buffer.get() + size/2, local_buffer.get() + size);
-
-      return local_buffer[size/2];
-    }
+如果你的栈空间受限，那么创建一个局部的 `const unique_ptr<BigObject>` 来把对象从存储于栈改为存储于堆的做法是没问题的。
 
 ### <a id="Rr-global"></a>R.6: 避免非 `const` 的全局变量
 
@@ -9880,7 +9861,7 @@ C 风格的字符串是以单个指向以零结尾的字符序列的指针来传
 
 ##### 强制实施
 
-【简单】 如果函数所使用的 `Shared_pointer` 的对象是函数之内所分配的，而且既不会将这个 `Shared_pointer` 返回，也不会将其传递给其他接受 `Shared_pointer&` 的函数的话，就给出警告。建议代之以 `unique_ptr`。
+【简单】 如果函数所使用的 `Shared_pointer` 的对象是函数之内所分配的，而且既不会将这个 `Shared_pointer` 返回，也不会将其传递给其他接受 `Shared_pointer` 的函数的话，就给出警告。建议代之以 `unique_ptr`。
 
 ### <a id="Rr-make_shared"></a>R.22: 使用 `make_shared()` 创建 `shared_ptr`
 
@@ -10016,14 +9997,9 @@ C 风格的字符串是以单个指向以零结尾的字符序列的指针来传
 
     void uses(widget*);            // 仅仅使用了这个 widget
 
-##### 示例，不好
-
-    void thinko(const unique_ptr<widget>&); // 通常不是你想要的
-
 ##### 强制实施
 
 * 【简单】 如果函数以左值引用接受 `Unique_pointer<T>` 参数，但并未在至少一个代码路径中向其赋值或者对其调用 `reset()`，则给出警告。建议代之以接受 `T*` 或 `T&`。
-* 【简单】〔基础〕 如果函数以 `const` 引用接受 `Unique_pointer<T>` 参数，则给出警告。建议代之以接受 `const T*` 或 `const T&`。
 
 ### <a id="Rr-reseat"></a>R.33: `unique_ptr<widget>&` 参数用以表达函数对该 `widget` 重新置位
 
@@ -10039,14 +10015,9 @@ C 风格的字符串是以单个指向以零结尾的字符序列的指针来传
 
     void reseat(unique_ptr<widget>&); // “将要”或“可能”重新置位指针
 
-##### 示例，不好
-
-    void thinko(const unique_ptr<widget>&); // 通常不是你想要的
-
 ##### 强制实施
 
 * 【简单】 如果函数以左值引用接受 `Unique_pointer<T>` 参数，但并未在至少一个代码路径中向其赋值或者对其调用 `reset()`，则给出警告。建议代之以接受 `T*` 或 `T&`。
-* 【简单】〔基础〕 如果函数以 `const` 引用接受 `Unique_pointer<T>` 参数，则给出警告。建议代之以接受 `const T*` 或 `const T&`。
 
 ### <a id="Rr-sharedptrparam-owner"></a>R.34: 用 `shared_ptr<widget>` 参数表达共享所有权
 
@@ -21359,7 +21330,7 @@ GSL 组件概览：
 * `unique_ptr<T>`     // 唯一所有权：`std::unique_ptr<T>`
 * `shared_ptr<T>`     // 共享所有权：`std::shared_ptr<T>`（引用计数指针）
 * `stack_array<T>`    // 栈分配数组。元素的数量在构造时确定并固定下来。其元素可改变，除非 `T` 为 `const` 类型。
-* `dyn_array<T>`      // ??? 有必要吗 ??? 堆分配数组。元素的数量在构造时确定并固定下来。
+* `dyn_array<T>`      // 一种容器，动态分配的无增长数组。元素的数量在构造时确定并固定下来。
   其元素可改变，除非 `T` 为 `const` 类型。基本上这是一个进行分配并拥有其元素的 `span`。
 
 ## <a id="SS-assertions"></a>GSL.assert: 断言
@@ -22195,7 +22166,8 @@ GSL 是在指导方针中所指定的类型和别名的一个小集合。当写�
 
 ### <a id="Faq-gsl-dyn-array"></a>FAQ.58: `dyn_array` 和 `vector` 或者提案的 `dynarray` 一样吗？
 
-不一样。`dyn_array` 是不可改变大小的，是一种指代堆分配的固定大小数组的一种安全方式。与 `vector` 不同，它是为了取代数组 `new[]` 的。与委员会中提案的 `dynarray` 不同，它并不会参与编译器和语言的魔法，来在当它作为分配于栈上的对象的成员时也在栈上分配；它只不过指代一个“动态的”或基于堆的数组而已。
+不一样。`dyn_array` 是一种容器，这与 `vector` 类似，但不可改变它的大小；其大小在运行时它被构造时确定。
+它是一种指代动态“堆”分配的固定大小数组的一种安全方式。与 `vector` 不同，它是为了取代数组 `new[]` 的。与委员会中提案的 `dynarray` 不同，它并不会参与编译器和语言的魔法，来在当它作为分配于栈上的对象的成员时也在栈上分配；它只不过指代一个“动态的”或基于堆的数组而已。
 
 ### <a id="Faq-gsl-expects"></a>FAQ.59: `Expects` 和 `assert` 一样吗？
 
@@ -22649,7 +22621,7 @@ GSL 是在指导方针中所指定的类型和别名的一个小集合。当写�
         // ...
     };
 
-这个类是一个资源句柄。它管理各个 `T` 对象的生存期。为此，`Vector` 必然要对[一组特殊操作](#Rc-five)（几个构造函数，析构函数，等等）进行定义或弃置。
+这个类是一个资源句柄。它管理各个 `T` 对象的生存期。为此，`Vector` 必然要对[复制、移动和析构操作](#Rc-five)进行定义或弃置。
 
 ##### 示例
 
@@ -22796,7 +22768,7 @@ GSL 是在指导方针中所指定的类型和别名的一个小集合。当写�
 
 ##### 注解
 
-若所有的成员都为资源句柄，则尽可能要依赖预置的特殊操作。
+若所有的成员都为资源句柄，则尽可能要依赖编译器生成的操作。
 
     template<typename T> struct Named {
         string name;
