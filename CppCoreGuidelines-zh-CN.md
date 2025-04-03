@@ -14644,13 +14644,13 @@ C++ 对此的机制是 `atomic` 类型：
 
     // 线程 1
     lock(m1, m2);
-    lock_guard<mutex> lck1(m1, defer_lock);
-    lock_guard<mutex> lck2(m2, defer_lock);
+    lock_guard<mutex> lck1(m1, adopt_lock);
+    lock_guard<mutex> lck2(m2, adopt_lock);
 
     // 线程 2
     lock(m2, m1);
-    lock_guard<mutex> lck2(m2, defer_lock);
-    lock_guard<mutex> lck1(m1, defer_lock);
+    lock_guard<mutex> lck2(m2, adopt_lock);
+    lock_guard<mutex> lck1(m1, adopt_lock);
 
 或者（这样更佳，但仅为 C++17）：
 
