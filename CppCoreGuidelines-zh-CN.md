@@ -1,6 +1,6 @@
 # <a id="main"></a>C++ 核心指导方针
 
-2024/10/3
+2025/7/8
 
 编辑：
 
@@ -2744,9 +2744,13 @@ C++ 标准库隐含地对 C 标准库中的所有函数做了这件事。
 析构函数，`swap` 函数，移动操作，以及默认构造函数不应当抛出异常。
 另请参见 [C.44](#Rc-default00)。
 
+##### 注解
+
+必须小心对待基类虚函数和属于公开接口的函数，因为将函数声明为 `noexcept` 就是在设立一项保证，当下和未来的所有实现都必须遵守它。对于虚函数来说，它的所有覆盖函数也必须 `noexcept`，而移除函数的 `noexcept` 可能会破坏函数的调用方。
+
 ##### 强制实施
 
-* 标记不是 `noexcept`，而又不能抛出异常的函数。
+* 【困难】 标记不是 `noexcept`，而又不能抛出异常的底层函数。
 * 标记抛出异常的 `swap`，`move`，析构函数，以及默认构造函数。
 
 ### <a id="Rf-smart"></a>F.7: 对于常规用法，应当接受 `T*` 或 `T&` 参数而不是智能指针
@@ -3723,7 +3727,7 @@ C 风格的字符串非常普遍。它们是按一种约定方式定义的：就
 
 * 请想象一下当 `fx` 和 `gx` 类型不同时会发生什么。
 * 请想象一下当 `fx` 或 `gx` 的类型带有不变式时会发生什么。
-* 请想象一下当在更大的一组函数之间传递的不止是悬挂指针时会发生什么。
+* 请想象一下当在更大的一组函数之间传递这个悬挂指针时会发生什么。
 * 请想象一下一个攻击者能够利用悬挂指针干些什么。
 
 幸运的是，大多数（全部？）的当代编译器都可以识别这种简单的情况并给出警告。
@@ -4012,7 +4016,7 @@ C 风格的字符串非常普遍。它们是按一种约定方式定义的：就
         pool.run([=, &v] {
             /*
             ...
-            ... 处理 v 的 1 / max, 即第 tasknum 个部分
+            ... 处理 v 的 1/max, 即第 tasknum 个部分
             ...
             */
         });
@@ -7432,7 +7436,7 @@ Lambda 表达式（通常通俗地简称为“lambda”）是一种产生函数�
 * **隐式虚函数**: 程序员有意使函数隐含为虚函数，而它确实如此（但代码的读者搞不清楚这点）；或者，程序员有意使函数隐含为虚函数，但它并非如此（例如，由于微妙的参数列表不匹配所导致）；或者，程序员并非有意使函数为虚函数，但它却成为虚函数（由于它刚好与基类中的某个虚函数具有相同的签名）
 * **隐式覆盖**: 程序员有意使函数隐式地成为覆盖函数，而它确实如此（但代码的读者搞不清楚这点）；或者，程序员有意使函数隐式地成为覆盖函数，但它并非如此（例如，由于微妙的参数列表不匹配）；或者，程序员并非有意使函数成为覆盖函数，但它却成为覆盖函数（由于它刚好与基类中的某个虚函数具有相同的签名 -- 注意无论这个函数是否被显式声明为虚函数都会发生这个问题，因为程序员的意图既可能是要创建一个新的虚函数也可能要创建一个新的非虚函数）
 
-注意：对于定义为 `final` 的类来说，是否在一个虚函数上标记 `override` 或 `final` 是无所谓的。
+注意：对于定义为 `final` 的类来说，其各个虚函数应当要么使用 `override` 要么使用 `final`；此情况下二者的语义没有不同。
 
 注意：对函数使用 `final` 要保守。它不一定会带来优化，但会排除进一步的覆盖。
 
@@ -7772,6 +7776,8 @@ Lambda 表达式（通常通俗地简称为“lambda”）是一种产生函数�
 * 对所有成员函数都为虚函数并带有实现的类进行标记。
 
 ### <a id="Rh-protected"></a>C.133: 避免 `protected` 数据
+
+**替代表述**：使成员数据为 `public` 或（推荐）为 `private`。
 
 ##### 理由
 
@@ -9018,7 +9024,7 @@ C++ 语义中的很多部分都假定了其默认的含义。
     void if_you_must_pun(int& x)
     {
         auto p = reinterpret_cast<std::byte*>(&x);
-        cout << p[0] << '\n';     // OK；好多了
+        cout << to_integer<unsigned>(p[0]) << '\n'; // OK；好多了
         // ...
     }
 
@@ -11956,8 +11962,8 @@ C++17 收紧了有关求值顺序的规则，但函数实参求值顺序仍然�
 
 优良的分析器可以检测到所有的窄化转换。不过，对所有的窄化转换都进行标记将带来大量的误报。建议的做法是：
 
-* 标记出所有的浮点向整数转换（可能只有 `float`->`char` 和 `double`->`int`。这里有问题！需要数据支持）。
-* 标记出所有的 `long`->`char`（我怀疑 `int`->`char` 非常常见。这里有问题！需要数据支持）。
+* 标记出所有的浮点向整数转换。（可能只有 `float`->`char` 和 `double`->`int`。这里有问题！需要数据支持。）
+* 标记出所有的 `long`->`char`。（我怀疑 `int`->`char` 非常常见。这里有问题！需要数据支持。）
 * 在函数参数上发生的窄化转换特别值得怀疑。
 
 ### <a id="Res-nullptr"></a>ES.47: 使用 `nullptr` 而不是 `0` 或 `NULL`
@@ -12008,7 +12014,7 @@ C++17 收紧了有关求值顺序的规则，但函数实参求值顺序仍然�
 
     3.29048e-321 666 666
 
-奇怪吗？我很庆幸程序没有崩溃掉。
+奇怪吗？这实际上是未定义行为，因而也可能导致程序崩溃。
 
 ##### 注解
 
@@ -16242,7 +16248,7 @@ RAII（Resource Acquisition Is Initialization，资源获取即初始化）是�
 当检测位置没有可以添加的有用信息时，可以使用派生于 `exception`
 的库类型作为通用类型：
 
-    throw std::runtime_error{"someting bad"}; // 好
+    throw std::runtime_error{"something bad"}; // 好
 
     // ...
 
@@ -18751,7 +18757,7 @@ C++ 是不支持这样做的。
     class List : List_base {
     public:
         void put_front(const T& e) { add_front(new Link<T>{e}); }   // 隐式强制转换为 Link_base
-        T& front() { static_cast<Link<T>*>(first).val; }   // 显式强制转换回 Link<T>
+        T& front() { return static_cast<Link<T>*>(first)->val; }   // 显式强制转换回 Link<T>
         // ...
     };
 
@@ -20560,7 +20566,7 @@ C 标准库规则概览：
 * [NR.4: 请勿坚持把每个类定义放在其自己的源文件中](#Rnr-lots-of-files)
 * [NR.5: 请勿采用两阶段初始化](#Rnr-two-phase-init)
 * [NR.6: 请勿把所有清理操作放在函数末尾并使用 `goto exit`](#Rnr-goto-exit)
-* [NR.7: 请勿使所有数据成员 `protected`](#Rnr-protected-data)
+* [NR.7: 请勿使数据成员为 `protected`](#Rnr-protected-data)
 * ???
 
 ### <a id="Rnr-top"></a>NR.1: 请勿坚持认为声明都应当放在函数的最上面
@@ -20768,6 +20774,10 @@ C 标准库规则概览：
 更复杂的代码（必须处理半构造对象），
 以及错误（当未能一致地正确处理半构造对象时）。
 
+##### 注解
+
+有时候也称为“两阶段构造”。
+
 ##### 示例，不好
 
     // 老式传统风格：有许多问题
@@ -20896,7 +20906,7 @@ C 标准库规则概览：
 * 使用异常和 [RAII](#Re-raii)
 * 对于非 RAII 资源，使用 [`finally`](#Re-finally)。
 
-### <a id="Rnr-protected-data"></a>NR.7: 请勿使所有数据成员 `protected`
+### <a id="Rnr-protected-data"></a>NR.7: 请勿使数据成员为 `protected`
 
 ##### 理由
 
@@ -20910,7 +20920,7 @@ C 标准库规则概览：
 
 ##### 替代方案
 
-* [使成员数据 `public` 或者（更好地）`private`](#Rh-protected)。
+* [避免 `protected` 数据](#Rh-protected)。
 
 
 # <a id="S-references"></a>RF: 参考材料
@@ -20951,8 +20961,8 @@ C 标准库规则概览：
 
 ## <a id="SS-rules"></a>RF.rules: 编码规则
 
-* [AUTOSAR Guidelines for the use of the C++14 language in critical and safety-related systems v17.10](https://www.autosar.org/fileadmin/user_upload/standards/adaptive/17-10/AUTOSAR_RS_CPP14Guidelines.pdf)
-* [Boost Library Requirements and Guidelines](http://www.boost.org/development/requirements.html).
+* [AUTOSAR Guidelines for the use of the C++14 language in critical and safety-related systems v22.11](https://www.autosar.org/fileadmin/standards/R22-11/AP/AUTOSAR_RS_CPP14Guidelines.pdf) (已过时，被 [MISRA C++:2023](https://misra.org.uk/product/misra-cpp2023/) 取代)
+* * [Boost Library Requirements and Guidelines](http://www.boost.org/development/requirements.html).
   ???.
 * [Bloomberg: BDE C++ Coding](https://github.com/bloomberg/bde/wiki/CodingStandards.pdf).
   着重强调了代码的组织和布局。
@@ -20998,10 +21008,10 @@ C 标准库规则概览：
 * [Stroustrup05](#Stroustrup05) Bjarne Stroustrup: [A rationale for semantically enhanced library languages](http://www.stroustrup.com/SELLrationale.pdf).
   LCSD05. October 2005.
 * [Stroustrup14](#Stroustrup05) Stroustrup: [A Tour of C++](http://www.stroustrup.com/Tour.html).
-  Addison Wesley 2014.
+  Addison-Wesley 2014.
   每章的结尾都有一个包含一组建议的忠告部分。
 * [Stroustrup13](#Stroustrup13) Stroustrup: [The C++ Programming Language (4th Edition)](http://www.stroustrup.com/4th.html).
-  Addison Wesley 2013.
+  Addison-Wesley 2013.
   每章的结尾都有一个包含一组建议的忠告部分。
 * Stroustrup: [Style Guide](http://www.stroustrup.com/Programming/PPP-style.pdf)
   for [Programming: Principles and Practice using C++](http://www.stroustrup.com/programming.html).
@@ -21032,7 +21042,7 @@ C 标准库规则概览：
 
 * Bjarne Stroustrup: [C++11?Style](http://channel9.msdn.com/Events/GoingNative/GoingNative-2012/Keynote-Bjarne-Stroustrup-Cpp11-Style). 2012.
 * Bjarne Stroustrup: [The Essence of C++: With Examples in C++84, C++98, C++11, and?C++14](http://channel9.msdn.com/Events/GoingNative/2013/Opening-Keynote-Bjarne-Stroustrup). 2013
-* [CppCon '14](https://isocpp.org/blog/2014/11/cppcon-videos-c9) 的全部演讲
+* [CppCon &#8217;14](https://isocpp.org/blog/2014/11/cppcon-videos-c9) 的全部演讲
 * Bjarne Stroustrup: [The essence of C++](https://www.youtube.com/watch?v=86xWVb4XIyE) 在爱丁堡大学。2014
 * Bjarne Stroustrup: [The Evolution of C++ Past, Present and Future](https://www.youtube.com/watch?v=_wzc7a3McOs). CppCon 2016 keynote.
 * Bjarne Stroustrup: [Make Simple Tasks Simple!](https://www.youtube.com/watch?v=nesCaocNjtQ). CppCon 2014 keynote.
@@ -23059,10 +23069,10 @@ Clang-tidy 有一组专门用于强制实施 C++ 核心指导方针的规则。�
 * <a id="Stroustrup05"></a>
   \[Stroustrup05]:    B. Stroustrup. [A rationale for semantically enhanced library languages](http://www.stroustrup.com/SELLrationale.pdf).
 * <a id="Stroustrup13"></a>
-  \[Stroustrup13]:    B. Stroustrup. [The C++ Programming Language (4th Edition)](http://www.stroustrup.com/4th.html). Addison Wesley 2013.
+  \[Stroustrup13]:    B. Stroustrup. [The C++ Programming Language (4th Edition)](http://www.stroustrup.com/4th.html). Addison-Wesley 2013.
 * <a id="Stroustrup14"></a>
   \[Stroustrup14]:    B. Stroustrup. [A Tour of C++](http://www.stroustrup.com/Tour.html).
-  Addison Wesley 2014.
+  Addison-Wesley 2014.
 * <a id="Stroustrup15"></a>
   \[Stroustrup15]:    B. Stroustrup, Herb Sutter, and G. Dos Reis: [A brief introduction to C++'s model for type- and resource-safety](https://github.com/isocpp/CppCoreGuidelines/blob/master/docs/Introduction%20to%20type%20and%20resource%20safety.pdf).
 * <a id="SuttHysl04b"></a>
